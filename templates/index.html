@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinBuddy AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root {
+  --bg:        #050507;
+  --s1:        #0c0c12;
+  --s2:        #111118;
+  --s3:        #18181f;
+  --border:    rgba(255,255,255,0.06);
+  --border-hi: rgba(255,255,255,0.12);
+  --text:      #f0f0f8;
+  --muted:     #5a5a72;
+  --dim:       #2e2e3e;
+  --violet:    #7c5cfc;
+  --violet-lo: rgba(124,92,252,0.12);
+  --blue:      #3b8bff;
+  --blue-lo:   rgba(59,139,255,0.10);
+  --cyan:      #00d4ff;
+  --cyan-lo:   rgba(0,212,255,0.08);
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:4px;}
+#auth{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+#auth::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 30%,rgba(124,92,252,0.08) 0%,transparent 70%);pointer-events:none;}
+.auth-wrap{width:380px;position:relative;}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:40px;}
+.auth-logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--blue));display:flex;align-items:center;justify-content:center;font-size:18px;}
+.auth-logo-name{font-family:var(--font-head);font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.auth-logo-name span{color:var(--violet);}
+.auth-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:36px;}
+.auth-title{font-family:var(--font-head);font-size:26px;font-weight:700;margin-bottom:6px;letter-spacing:-.4px;}
+.auth-sub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+.auth-tabs{display:flex;background:var(--s2);border-radius:10px;padding:3px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s;font-family:var(--font-head);}
+.auth-tab.on{background:var(--s3);color:var(--text);border:1px solid var(--border);}
+.afield{margin-bottom:16px;}
+.afield label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;}
+.afield input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;font-family:var(--font-body);outline:none;transition:border .2s;}
+.afield input:focus{border-color:rgba(124,92,252,.5);}
+.afield input::placeholder{color:var(--muted);}
+.btn-auth{width:100%;background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-head);letter-spacing:.2px;transition:opacity .2s;margin-top:4px;}
+.btn-auth:hover{opacity:.88;}
+.auth-msg{font-size:12px;text-align:center;margin-top:12px;display:none;}
+.auth-msg.err{color:#f87171;}
+.auth-msg.ok{color:#4ade80;}
+#app{display:none;min-height:100vh;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:220px;min-width:220px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:0 6px;margin-bottom:36px;}
+.sb-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--blue));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.sb-name{font-family:var(--font-head);font-size:16px;font-weight:700;letter-spacing:-.2px;}
+.sb-name span{color:var(--violet);}
+.sb-sec{font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;padding:0 10px;margin-bottom:6px;margin-top:20px;}
+.nav{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .18s;margin-bottom:1px;user-select:none;}
+.nav:hover{background:var(--s2);color:var(--text);}
+.nav.on{background:var(--violet-lo);color:var(--text);border:1px solid rgba(124,92,252,.2);}
+.nav-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.nav.on .nav-ic{background:rgba(124,92,252,.2);}
+.sb-bot{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .18s;}
+.sb-user:hover{background:var(--s2);}
+.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--violet),#e040fb);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:var(--font-head);flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:600;color:var(--text);font-family:var(--font-head);}
+.sb-urole{font-size:11px;color:var(--muted);}
+.btn-lo{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:4px;border-radius:6px;transition:color .18s;margin-left:auto;}
+.btn-lo:hover{color:#f87171;}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(5,5,7,.8);backdrop-filter:blur(20px);z-index:10;}
+.topbar-left .greeting{font-family:var(--font-head);font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.topbar-left .gsub{font-size:12px;color:var(--muted);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.searchbar{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:8px 14px;transition:border .2s;}
+.searchbar:focus-within{border-color:rgba(124,92,252,.4);}
+.searchbar input{background:none;border:none;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none;width:180px;}
+.searchbar input::placeholder{color:var(--muted);}
+.searchbar span{color:var(--muted);font-size:15px;}
+.icon-btn{width:36px;height:36px;border-radius:9px;background:var(--s1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;color:var(--muted);font-size:16px;}
+.icon-btn:hover{background:var(--s2);color:var(--text);border-color:var(--border-hi);}
+.notif-dot{position:relative;}
+.notif-dot::after{content:'';position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--violet);border-radius:50%;border:1.5px solid var(--bg);}
+.top-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--violet),#e040fb);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:var(--font-head);cursor:pointer;border:1.5px solid rgba(124,92,252,.4);}
+.page{display:none;padding:24px 28px;}
+.page.on{display:block;}
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;}
+.gc{background:var(--s1);border:1px solid var(--border);border-radius:18px;padding:22px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;}
+.gc:hover{border-color:var(--border-hi);transform:translateY(-1px);}
+.gc-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;}
+.gc-val{font-family:var(--font-head);font-size:36px;font-weight:800;letter-spacing:-1.5px;line-height:1;}
+.gc-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);pointer-events:none;opacity:.45;}
+.c-spend{grid-column:span 4;}
+.c-spend .gc-val{font-size:42px;background:linear-gradient(135deg,#fff 40%,var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.spend-change{display:inline-flex;align-items:center;gap:4px;background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.2);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--violet);margin-top:8px;}
+.spend-mini{height:52px;margin-top:14px;}
+.c-health{grid-column:span 3;}
+.ring-wrap{position:relative;width:90px;height:90px;margin:8px auto 0;}
+.ring-wrap canvas{position:absolute;inset:0;}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-score{font-family:var(--font-head);font-size:24px;font-weight:800;}
+.ring-max{font-size:10px;color:var(--muted);}
+.health-badge{margin-top:12px;text-align:center;font-size:11px;font-weight:600;color:var(--cyan);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:20px;padding:3px 12px;display:inline-block;}
+.health-comment{font-size:10px;color:var(--muted);margin-top:6px;}
+.c-goal{grid-column:span 5;}
+.goal-nums{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
+.goal-curr{font-family:var(--font-head);font-size:28px;font-weight:800;letter-spacing:-1px;}
+.goal-target{font-size:12px;color:var(--muted);text-align:right;}
+.goal-target span{display:block;font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text);}
+.goal-bar{height:8px;background:var(--s3);border-radius:999px;overflow:hidden;margin-bottom:8px;}
+.goal-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--blue));border-radius:999px;transition:width 1s ease;}
+.goal-pct{font-size:11px;color:var(--muted);}
+.c-cats{grid-column:span 4;}
+.donut-wrap{position:relative;width:130px;height:130px;margin:0 auto;}
+.donut-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.donut-total{font-family:var(--font-head);font-size:18px;font-weight:800;}
+.donut-sub{font-size:10px;color:var(--muted);}
+.cat-legend{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
+.cat-row{display:flex;align-items:center;justify-content:space-between;}
+.cat-left{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-pct-val{font-size:12px;font-weight:600;font-family:var(--font-head);}
+.c-trend{grid-column:span 8;}
+.trend-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.trend-tabs{display:flex;gap:4px;}
+.ttab{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .18s;border:1px solid transparent;}
+.ttab.on{background:var(--violet-lo);color:var(--violet);border-color:rgba(124,92,252,.2);}
+.trend-chart{height:160px;}
+.c-insights{grid-column:span 5;}
+.insights-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.insight-item{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.insight-item:hover{border-color:var(--border-hi);transform:translateX(2px);}
+.insight-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;}
+.insight-item.violet::before{background:var(--violet);}
+.insight-item.blue::before{background:var(--blue);}
+.insight-item.cyan::before{background:var(--cyan);}
+.insight-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.insight-text{font-size:12px;line-height:1.5;color:var(--text);}
+.insight-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.insight-tag.violet{background:rgba(124,92,252,.12);color:var(--violet);}
+.insight-tag.blue{background:rgba(59,139,255,.1);color:var(--blue);}
+.insight-tag.cyan{background:rgba(0,212,255,.08);color:var(--cyan);}
+.insight-meta{font-size:10px;color:var(--muted);margin-top:5px;}
+.c-tx{grid-column:span 7;}
+.tx-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.tx-see{font-size:11px;color:var(--violet);cursor:pointer;font-weight:600;}
+.tx-list{display:flex;flex-direction:column;gap:2px;}
+.tx-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);transition:background .15s;border-radius:8px;padding-left:4px;padding-right:4px;}
+.tx-row:last-child{border-bottom:none;}
+.tx-row:hover{background:var(--s2);}
+.tx-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.tx-info{flex:1;min-width:0;}
+.tx-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-cat{font-size:11px;color:var(--muted);}
+.tx-right{text-align:right;}
+.tx-amt{font-family:var(--font-head);font-size:13px;font-weight:700;color:#f87171;}
+.tx-date{font-size:11px;color:var(--muted);}
+.c-streak{grid-column:span 3;}
+.streak-num{font-family:var(--font-head);font-size:52px;font-weight:800;line-height:1;letter-spacing:-2px;background:linear-gradient(135deg,#ff8c42,#ff5757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.streak-label{font-size:13px;font-weight:500;color:var(--muted);margin-top:4px;}
+.streak-dots{display:flex;gap:5px;margin-top:16px;flex-wrap:wrap;}
+.sd{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.sd.done{background:linear-gradient(135deg,rgba(255,140,66,.2),rgba(255,87,87,.2));border:1px solid rgba(255,140,66,.3);}
+.sd.miss{background:var(--s2);border:1px solid var(--border);}
+.tx-full-table{width:100%;border-collapse:collapse;margin-top:16px;}
+.tx-full-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;}
+.tx-full-table td{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;vertical-align:middle;}
+.tx-full-table tr:hover td{background:rgba(255,255,255,.02);}
+.chat-shell{background:var(--s1);border:1px solid var(--border);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 200px);}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:22px;}
+.bbl{max-width:75%;padding:12px 16px;border-radius:16px;font-size:13px;line-height:1.6;animation:popUp .25s ease;}
+@keyframes popUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.bbl.u{background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500;}
+.bbl.a{background:var(--s2);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;}
+.bbl.a.roast{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);}
+.typing{display:flex;align-items:center;gap:5px;padding:12px 16px;background:var(--s2);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;align-self:flex-start;}
+.typing span{width:5px;height:5px;background:var(--muted);border-radius:50%;animation:td .7s infinite;}
+.typing span:nth-child(2){animation-delay:.12s;}
+.typing span:nth-child(3){animation-delay:.24s;}
+@keyframes td{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+.chat-bar{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--border);background:var(--s1);}
+.chat-in{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:11px 14px;font-size:13px;font-family:var(--font-body);color:var(--text);outline:none;transition:border .2s;}
+.chat-in:focus{border-color:rgba(124,92,252,.4);}
+.chat-in::placeholder{color:var(--muted);}
+.btn-send{background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;border:none;border-radius:11px;padding:11px 18px;font-weight:600;cursor:pointer;font-family:var(--font-head);font-size:13px;transition:opacity .2s;}
+.btn-send:hover{opacity:.85;}
+.btn-roast{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:none;border-radius:11px;padding:11px 14px;font-weight:600;cursor:pointer;font-family:var(--font-head);font-size:12px;transition:all .2s;white-space:nowrap;}
+.btn-roast:hover{transform:scale(1.04);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;}
+.modal-bg.on{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border-hi);border-radius:20px;padding:30px;width:460px;animation:popUp .25s ease;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.modal-title{font-family:var(--font-head);font-size:17px;font-weight:700;}
+.btn-x{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color .15s;}
+.btn-x:hover{color:var(--text);}
+.mfield{margin-bottom:14px;}
+.mfield label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.mfield input,.mfield select{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none;transition:border .2s;}
+.mfield input:focus,.mfield select:focus{border-color:rgba(124,92,252,.4);}
+.mfield select option{background:var(--s1);}
+.modal-acts{display:flex;gap:10px;margin-top:20px;}
+.btn-cancel{flex:1;background:var(--s2);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-head);transition:all .15s;}
+.btn-cancel:hover{background:var(--s3);}
+.btn-ok{flex:2;background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-head);transition:opacity .2s;}
+.btn-ok:hover{opacity:.88;}
+.btn-add{background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-head);transition:opacity .2s;display:flex;align-items:center;gap:6px;}
+.btn-add:hover{opacity:.85;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s1);border:1px solid var(--border-hi);color:var(--text);padding:11px 16px;border-radius:10px;font-size:12px;font-weight:600;z-index:999;display:none;animation:popUp .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.empty{text-align:center;padding:40px;color:var(--muted);}
+.empty-ic{font-size:36px;margin-bottom:10px;}
+.empty p{font-size:13px;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.ph-title{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:-.4px;}
+.ph-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.coming{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;color:var(--muted);}
+.coming-ic{font-size:48px;margin-bottom:16px;opacity:.4;}
+.coming h3{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.coming p{font-size:13px;}
+@media(max-width:1100px){
+  .c-spend,.c-health,.c-goal{grid-column:span 6;}
+  .c-cats,.c-trend,.c-streak{grid-column:span 6;}
+  .c-insights,.c-tx{grid-column:span 12;}
+}
+@media(max-width:800px){
+  .sidebar{display:none;}
+  .page{padding:16px;}
+  .bento>*{grid-column:span 12!important;}
+  .topbar{padding:14px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">💰</div>
+      <div class="auth-logo-name">Fin<span>Buddy</span> AI</div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-title">Sign in</div>
+      <div class="auth-sub">Your AI-powered finance operating system</div>
+      <div class="auth-tabs">
+        <div class="auth-tab on" onclick="atab('login')">Login</div>
+        <div class="auth-tab" onclick="atab('register')">Register</div>
+      </div>
+      <div id="af-login">
+        <div class="afield"><label>Username</label><input id="lu" placeholder="your_username" onkeydown="if(event.key==='Enter')login()"></div>
+        <div class="afield"><label>Password</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+        <button class="btn-auth" onclick="login()">Sign in →</button>
+      </div>
+      <div id="af-reg" style="display:none">
+        <div class="afield"><label>Username</label><input id="ru" placeholder="choose_username"></div>
+        <div class="afield"><label>Email</label><input type="email" id="re" placeholder="you@email.com"></div>
+        <div class="afield"><label>Password</label><input type="password" id="rp" placeholder="••••••••"></div>
+        <button class="btn-auth" onclick="register()">Create account →</button>
+      </div>
+      <div class="auth-msg" id="amsg"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-mark">💰</div>
+        <div class="sb-name">Fin<span>Buddy</span></div>
+      </div>
+      <div class="sb-sec">Main</div>
+      <div class="nav on" onclick="gotoPage('home',this)"><div class="nav-ic">⬡</div>Overview</div>
+      <div class="nav" onclick="gotoPage('tx',this)"><div class="nav-ic">↕</div>Transactions</div>
+      <div class="nav" onclick="gotoPage('chat',this)"><div class="nav-ic">✦</div>AI Advisor</div>
+      <div class="sb-sec">Plan</div>
+      <div class="nav" onclick="gotoPage('budgets',this)"><div class="nav-ic">◎</div>Budgets</div>
+      <div class="nav" onclick="gotoPage('insights',this)"><div class="nav-ic">△</div>Insights</div>
+      <div class="nav" onclick="gotoPage('goals',this)"><div class="nav-ic">◇</div>Goals</div>
+      <div class="sb-sec">System</div>
+      <div class="nav" onclick="gotoPage('settings',this)"><div class="nav-ic">⊙</div>Settings</div>
+      <div class="sb-bot">
+        <div class="sb-user">
+          <div class="sb-av" id="sb-av">K</div>
+          <div><div class="sb-uname" id="sb-uname">User</div><div class="sb-urole">Personal</div></div>
+          <button class="btn-lo" onclick="logout()" title="Logout">↩</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="greeting" id="greeting">Good evening, Kritvi 👋</div>
+          <div class="gsub">Here's your financial overview</div>
+        </div>
+        <div class="topbar-right">
+          <div class="searchbar">
+            <span>⌕</span>
+            <input placeholder="Search transactions...">
+          </div>
+          <div class="icon-btn notif-dot" title="Notifications">🔔</div>
+          <button class="btn-add" onclick="openModal()">+ Add</button>
+          <div class="top-av" id="top-av">K</div>
+        </div>
+      </div>
+
+      <div class="page on" id="page-home">
+        <div class="bento">
+          <div class="gc c-spend">
+            <div class="blob" style="width:120px;height:120px;background:var(--violet);top:-40px;right:-30px;opacity:.15;"></div>
+            <div class="gc-label">Total Spending</div>
+            <div class="gc-val" id="c-total">₹0</div>
+            <div><span class="spend-change" id="c-change">↗ This month</span></div>
+            <div class="spend-mini"><canvas id="miniChart"></canvas></div>
+          </div>
+
+          <div class="gc c-health" style="text-align:center;">
+            <div class="blob" style="width:100px;height:100px;background:var(--cyan);top:-30px;left:50%;transform:translateX(-50%);opacity:.1;"></div>
+            <div class="gc-label" style="text-align:left;">Financial Health</div>
+            <div class="ring-wrap">
+              <canvas id="ringChart"></canvas>
+              <div class="ring-center">
+                <div class="ring-score" id="ring-score">82</div>
+                <div class="ring-max">/100</div>
+              </div>
+            </div>
+            <div style="text-align:center;"><span class="health-badge" id="health-badge">Doing great ✦</span></div>
+            <div class="health-comment" id="health-comment">Budget status</div>
+          </div>
+
+          <div class="gc c-goal">
+            <div class="blob" style="width:150px;height:80px;background:var(--blue);bottom:-20px;right:-20px;opacity:.1;"></div>
+            <div class="gc-label">Savings Goal</div>
+            <div class="goal-nums">
+              <div class="goal-curr" id="g-curr">₹0</div>
+              <div class="goal-target">Target<span id="g-target">₹10,000</span></div>
+            </div>
+            <div class="goal-bar"><div class="goal-fill" id="g-fill" style="width:0%"></div></div>
+            <div class="goal-pct" id="g-pct">0% of goal reached</div>
+          </div>
+
+          <div class="gc c-cats">
+            <div class="gc-label">Spending Categories</div>
+            <div class="donut-wrap">
+              <canvas id="donutChart" width="130" height="130"></canvas>
+              <div class="donut-label">
+                <div class="donut-total" id="d-total">₹0</div>
+                <div class="donut-sub">total</div>
+              </div>
+            </div>
+            <div class="cat-legend" id="cat-legend"></div>
+          </div>
+
+          <div class="gc c-trend">
+            <div class="trend-head">
+              <div>
+                <div class="gc-label" style="margin:0 0 2px;">Spending Trend</div>
+                <div style="font-size:11px;color:var(--muted);">Daily spending over last 7 days</div>
+              </div>
+              <div class="trend-tabs">
+                <div class="ttab on">7D</div>
+                <div class="ttab">1M</div>
+                <div class="ttab">3M</div>
+              </div>
+            </div>
+            <div class="trend-chart"><canvas id="trendChart"></canvas></div>
+          </div>
+
+          <div class="gc c-insights">
+            <div class="gc-label">AI Insights</div>
+            <div class="insights-list" id="insights-list">
+              <div class="insight-item violet">
+                <div class="insight-top">
+                  <div class="insight-text">You spent 28% more on food this week compared to your monthly average.</div>
+                  <span class="insight-tag violet">Food</span>
+                </div>
+                <div class="insight-meta">2 hours ago · Tap to explore →</div>
+              </div>
+              <div class="insight-item blue">
+                <div class="insight-top">
+                  <div class="insight-text">You can save ₹420/month by switching to metro for your daily commute.</div>
+                  <span class="insight-tag blue">Transport</span>
+                </div>
+                <div class="insight-meta">Yesterday · Smart suggestion</div>
+              </div>
+              <div class="insight-item cyan">
+                <div class="insight-top">
+                  <div class="insight-text">Your spending is healthier than 74% of students in your category.</div>
+                  <span class="insight-tag cyan">Score</span>
+                </div>
+                <div class="insight-meta">This week · Benchmark data</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gc c-tx">
+            <div class="tx-head">
+              <div class="gc-label" style="margin:0;">Recent Transactions</div>
+              <span class="tx-see" onclick="gotoPage('tx',document.querySelectorAll('.nav')[1])">See all →</span>
+            </div>
+            <div class="tx-list" id="tx-list">
+              <div class="empty"><div class="empty-ic">📭</div><p>No transactions yet</p></div>
+            </div>
+          </div>
+
+          <div class="gc c-streak">
+            <div class="blob" style="width:100px;height:100px;background:#ff5757;bottom:-20px;right:-20px;opacity:.1;"></div>
+            <div class="gc-label">Saving Streak</div>
+            <div style="margin-top:6px;">
+              <div style="font-size:22px;margin-bottom:4px;">🔥</div>
+              <div class="streak-num" id="streak-num">12</div>
+              <div class="streak-label">Day Tracking Streak</div>
+            </div>
+            <div class="streak-dots" id="streak-dots"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-tx">
+        <div class="ph">
+          <div>
+            <div class="ph-title">Transactions</div>
+            <div class="ph-sub">Your full expense history</div>
+          </div>
+          <button class="btn-add" onclick="openModal()">+ Add Expense</button>
+        </div>
+        <div class="gc" style="padding:0;overflow:auto;">
+          <table class="tx-full-table">
+            <thead><tr><th>Description</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead>
+            <tbody id="tx-full-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page" id="page-chat">
+        <div class="ph">
+          <div>
+            <div class="ph-title">AI Advisor ✦</div>
+            <div class="ph-sub">Your personal finance intelligence layer</div>
+          </div>
+        </div>
+        <div class="chat-shell">
+          <div class="chat-msgs" id="chat-msgs">
+            <div class="bbl a">Hey! I'm your FinBuddy AI ✦<br>Ask me anything about your spending, savings, or habits. Or hit <strong>🔥 Roast Me</strong> for brutal honesty.</div>
+          </div>
+          <div class="chat-bar">
+            <input class="chat-in" id="chat-in" placeholder="Ask about your finances..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="btn-send" onclick="sendChat()">Send</button>
+            <button class="btn-roast" onclick="roastMe()">🔥 Roast</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-budgets">
+        <div class="ph"><div><div class="ph-title">Budgets ◎</div><div class="ph-sub">Set and track spending limits</div></div></div>
+        <div class="coming"><div class="coming-ic">◎</div><h3>Budget Intelligence</h3><p>AI-powered budget tracking — coming soon</p></div>
+      </div>
+      <div class="page" id="page-insights">
+        <div class="ph"><div><div class="ph-title">Insights △</div><div class="ph-sub">Deep AI analysis of your finances</div></div></div>
+        <div class="coming"><div class="coming-ic">△</div><h3>Deep Insights</h3><p>Pattern recognition & forecasting — coming soon</p></div>
+      </div>
+      <div class="page" id="page-goals">
+        <div class="ph"><div><div class="ph-title">Goals ◇</div><div class="ph-sub">Financial milestones and targets</div></div></div>
+        <div class="coming"><div class="coming-ic">◇</div><h3>Goal Engine</h3><p>Milestone tracking — coming soon</p></div>
+      </div>
+      <div class="page" id="page-settings">
+        <div class="ph"><div><div class="ph-title">Settings ⊙</div></div></div>
+        <div class="coming"><div class="coming-ic">⊙</div><h3>Settings</h3><p>Account preferences — coming soon</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Log Expense</div>
+      <button class="btn-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mfield"><label>Amount (₹)</label><input type="number" id="e-amt" placeholder="500"></div>
+    <div class="mfield"><label>Category</label>
+      <select id="e-cat">
+        <option value="food">🍔 Food</option>
+        <option value="transport">🚌 Transport</option>
+        <option value="college">🎓 College</option>
+        <option value="entertainment">🎮 Entertainment</option>
+        <option value="shopping">🛍️ Shopping</option>
+        <option value="health">💊 Health</option>
+        <option value="other">📦 Other</option>
+      </select>
+    </div>
+    <div class="mfield"><label>Description</label><input type="text" id="e-desc" placeholder="Lunch at canteen"></div>
+    <div class="mfield"><label>Date</label><input type="date" id="e-date"></div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-ok" onclick="addExpense()">Add Expense</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:8001/api';
+let token = localStorage.getItem('fb_token');
+let uname = localStorage.getItem('fb_user');
+let currentUserId = null;
+
+const CAT = {
+  food:          {ic:'🍔', color:'#7c5cfc', bg:'rgba(124,92,252,.15)'},
+  transport:     {ic:'🚌', color:'#3b8bff', bg:'rgba(59,139,255,.12)'},
+  college:       {ic:'🎓', color:'#00d4ff', bg:'rgba(0,212,255,.10)'},
+  entertainment: {ic:'🎮', color:'#e040fb', bg:'rgba(224,64,251,.12)'},
+  shopping:      {ic:'🛍️', color:'#ffd93d', bg:'rgba(255,217,61,.10)'},
+  health:        {ic:'💊', color:'#4ade80', bg:'rgba(74,222,128,.10)'},
+  other:         {ic:'📦', color:'#5a5a72', bg:'rgba(90,90,114,.15)'},
+};
+
+let trendC, donutC, miniC, ringC;
+
+function atab(t){
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('on',i===(t==='login'?0:1)));
+  document.getElementById('af-login').style.display=t==='login'?'block':'none';
+  document.getElementById('af-reg').style.display=t==='register'?'block':'none';
+  document.getElementById('amsg').style.display='none';
+}
+
+function showAMsg(m,t){
+  const el=document.getElementById('amsg');
+  el.textContent=m;
+  el.className='auth-msg '+t;
+  el.style.display='block';
+}
+
+async function login(){
+  const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;
+  if(!u||!p){showAMsg('Fill in all fields','err');return;}
+  try{
+    const r=await fetch(`${API}/auth/token/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await r.json();
+    if(d.access){localStorage.clear();token=d.access;uname=u;localStorage.setItem('fb_token',token);localStorage.setItem('fb_user',u);enterApp();}
+    else showAMsg('Invalid credentials','err');
+  }catch(e){showAMsg('Connection error — is Django running?','err');}
+}
+
+async function register(){
+  const u=document.getElementById('ru').value.trim(),e=document.getElementById('re').value.trim(),p=document.getElementById('rp').value;
+  if(!u||!e||!p){showAMsg('Fill in all fields','err');return;}
+  try{
+    const r=await fetch(`${API}/users/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,email:e,password:p})});
+    if(r.ok){showAMsg('Account created! Login now.','ok');atab('login');}
+    else{const d=await r.json();showAMsg(Object.values(d).flat()[0]||'Error','err');}
+  }catch(e){showAMsg('Connection error','err');}
+}
+
+function logout(){token=null;uname=null;localStorage.removeItem('fb_token');localStorage.removeItem('fb_user');document.getElementById('app').style.display='none';document.getElementById('auth').style.display='flex';}
+
+window.onload=()=>{document.getElementById("e-date").value=td();};
+function td(){return new Date().toISOString().split('T')[0];}
+function yd(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];}
+
+async function loadUserId(){
+  try{
+    const r=await fetch(`${API}/users/me/`,{headers:{Authorization:`Bearer ${token}`}});
+    const d=await r.json();
+    currentUserId=d.id;
+  }catch(e){console.error("Failed to load user ID");}
+}
+
+async function enterApp(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='block';
+  const hr=new Date().getHours();
+  const gr=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const n=uname.charAt(0).toUpperCase()+uname.slice(1);
+  document.getElementById('greeting').textContent=`${gr}, ${n} 👋`;
+  document.getElementById('sb-av').textContent=n.charAt(0);
+  document.getElementById('top-av').textContent=n.charAt(0);
+  document.getElementById('sb-uname').textContent=n;
+  buildStreak([]);
+  await loadUserId();
+  initCharts();
+  loadExpenses();
+}
+
+function buildStreak(ex){
+  const el=document.getElementById("streak-dots");
+  el.innerHTML="";
+  const today=new Date();
+  const days=[];
+  for(let i=13;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);days.push(d.toISOString().split("T")[0]);}
+  const spendByDay={};
+  if(ex){ex.forEach(e=>{spendByDay[e.date]=(spendByDay[e.date]||0)+parseFloat(e.amount||0);});}
+  let streak=0;
+  const results=days.map(day=>{const spent=spendByDay[day]||0;const good=spent>0;return{day,good};});
+  for(let i=results.length-1;i>=0;i--){if(results[i].good&&spendByDay[results[i].day]>0)streak++;else break;}
+  document.getElementById("streak-num").textContent=streak;
+  results.forEach(r=>{const d=document.createElement("div");d.className="sd "+(r.good&&spendByDay[r.day]>0?"done":"miss");d.textContent=r.good&&spendByDay[r.day]>0?"✦":"·";el.appendChild(d);});
+}
+
+function gotoPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+  document.getElementById('page-'+name).classList.add('on');
+  if(el)el.classList.add('on');
+}
+
+function openModal(){document.getElementById('modal').classList.add('on');}
+function closeModal(){document.getElementById('modal').classList.remove('on');}
+
+async function loadExpenses(){
+  try{
+    const r=await fetch(`${API}/expenses/`,{headers:{Authorization:`Bearer ${token}`}});
+    const data=await r.json();
+    const ex=Array.isArray(data)?data:(data.results||[]);
+    renderAll(ex);
+  }catch(e){console.error(e);}
+}
+
+function renderAll(ex){
+  const total=ex.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  document.getElementById('c-total').textContent=`₹${total.toLocaleString('en-IN')}`;
+  document.getElementById('d-total').textContent=`₹${total.toLocaleString('en-IN')}`;
+
+  const saved=Math.max(0,10000-total);
+  document.getElementById('g-curr').textContent=`₹${saved.toLocaleString('en-IN')}`;
+  const pct=Math.min(100,Math.round((saved/10000)*100));
+  document.getElementById('g-fill').style.width=pct+'%';
+  document.getElementById('g-pct').textContent=`${pct}% of goal reached`;
+
+  renderTxList(ex);
+  buildStreak(ex);
+  renderInsights(ex);
+  renderTxFull(ex);
+  updateCharts(ex);
+}
+
+function renderTxList(ex){
+  const el=document.getElementById('tx-list');
+  const recent=ex.slice().reverse().slice(0,5);
+  if(!recent.length){el.innerHTML='<div class="empty"><div class="empty-ic">📭</div><p>No transactions yet</p></div>';return;}
+  el.innerHTML=recent.map(e=>{
+    const m=CAT[e.category]||CAT.other;
+    const ds=e.date===td()?'Today':e.date===yd()?'Yesterday':e.date;
+    return `<div class="tx-row">
+      <div class="tx-ic" style="background:${m.bg}">${m.ic}</div>
+      <div class="tx-info"><div class="tx-name">${e.description||e.category}</div><div class="tx-cat">${e.category}</div></div>
+      <div class="tx-right"><div class="tx-amt">-₹${parseFloat(e.amount).toLocaleString('en-IN')}</div><div class="tx-date">${ds}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTxFull(ex){
+  const el=document.getElementById('tx-full-body');
+  if(!ex.length){el.innerHTML=`<tr><td colspan="4" class="empty"><div class="empty-ic">📭</div><p>No transactions</p></td></tr>`;return;}
+  el.innerHTML=ex.slice().reverse().map(e=>{
+    const m=CAT[e.category]||CAT.other;
+    const ds=e.date===td()?'Today':e.date===yd()?'Yesterday':e.date;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="tx-ic" style="background:${m.bg};font-size:14px;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center">${m.ic}</div><span>${e.description||e.category}</span></div></td>
+      <td><span style="background:${m.bg};color:${m.color};padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600">${e.category}</span></td>
+      <td style="color:var(--muted)">${ds}</td>
+      <td style="color:#f87171;font-weight:700;font-family:'Syne',sans-serif">-₹${parseFloat(e.amount).toLocaleString('en-IN')}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function addExpense(){
+  const amt=parseFloat(document.getElementById('e-amt').value);
+  const cat=document.getElementById('e-cat').value;
+  const desc=document.getElementById('e-desc').value;
+  const date=document.getElementById('e-date').value;
+  if(!amt){showToast('⚠ Enter an amount');return;}
+  try{
+    const r=await fetch(`${API}/expenses/`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({amount:amt,category:cat,description:desc,date})});
+    if(r.ok){document.getElementById('e-amt').value='';document.getElementById('e-desc').value='';closeModal();showToast('✦ Expense logged');loadExpenses();}
+    else showToast('Error logging expense');
+  }catch(e){showToast('Connection error');}
+}
+
+function initCharts(){if(trendC)trendC.destroy();if(donutC)donutC.destroy();if(miniC)miniC.destroy();if(ringC)ringC.destroy();
+  Chart.defaults.color='#5a5a72';
+  Chart.defaults.borderColor='rgba(255,255,255,0.04)';
+
+  miniC=new Chart(document.getElementById('miniChart'),{
+    type:'line',
+    data:{labels:['','','','','','',''],datasets:[{data:[0,0,0,0,0,0,0],borderColor:'rgba(124,92,252,.6)',borderWidth:1.5,pointRadius:0,fill:false,tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:400}}
+  });
+
+  ringC=new Chart(document.getElementById('ringChart'),{
+    type:'doughnut',
+    data:{datasets:[{data:[82,18],backgroundColor:['rgba(0,212,255,.8)','rgba(255,255,255,.04)'],borderWidth:0,hoverOffset:0}]},
+    options:{cutout:'78%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{animateRotate:true,duration:1000}}
+  });
+
+  donutC=new Chart(document.getElementById('donutChart'),{
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:[],borderWidth:0,hoverOffset:6}]},
+    options:{cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ₹${c.raw.toLocaleString()}`}}},animation:{animateRotate:true,duration:800}}
+  });
+
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,160);
+  g.addColorStop(0,'rgba(124,92,252,.3)');
+  g.addColorStop(1,'rgba(124,92,252,.0)');
+  trendC=new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{data:[],borderColor:'#7c5cfc',backgroundColor:g,borderWidth:2,pointRadius:3,pointBackgroundColor:'#7c5cfc',pointBorderColor:'#050507',pointBorderWidth:2,fill:true,tension:.45}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#5a5a72',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#5a5a72',callback:v=>`₹${v}`,font:{size:10}}}},animation:{duration:600}}
+  });
+}
+
+function updateCharts(ex){
+  const days7=last7(ex);
+  miniC.data.datasets[0].data=days7;miniC.update();
+
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const map7={};
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);map7[d.toISOString().split('T')[0]]=0;}
+  ex.forEach(e=>{if(map7[e.date]!==undefined)map7[e.date]+=parseFloat(e.amount||0);});
+  trendC.data.labels=Object.keys(map7).map(d=>{const[,m,day]=d.split('-');return`${parseInt(day)} ${MONTHS[parseInt(m)-1]}`;});
+  trendC.data.datasets[0].data=Object.values(map7);
+  trendC.update();
+
+  const cats={};
+  ex.forEach(e=>{cats[e.category]=(cats[e.category]||0)+parseFloat(e.amount||0);});
+  const labels=Object.keys(cats),vals=Object.values(cats);
+  const colors=labels.map(l=>(CAT[l]||CAT.other).color);
+  donutC.data.labels=labels;
+  donutC.data.datasets[0].data=vals;
+  donutC.data.datasets[0].backgroundColor=colors;
+  donutC.update();
+
+  const total=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('cat-legend').innerHTML=labels.map((l,i)=>`
+    <div class="cat-row">
+      <div class="cat-left"><div class="cat-dot" style="background:${colors[i]}"></div>${l}</div>
+      <div class="cat-pct-val" style="color:${colors[i]}">${total>0?Math.round((vals[i]/total)*100):0}%</div>
+    </div>`).join('');
+
+  const income=5000;
+  const spent=ex.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const healthScore=Math.max(0,Math.min(100,100-Math.round((spent/income)*100)));
+  document.getElementById('ring-score').textContent=healthScore;
+  const badge=document.getElementById('health-badge');
+  if(healthScore>=80) badge.textContent='Excellent ✦';
+  else if(healthScore>=60) badge.textContent='Good ✓';
+  else if(healthScore>=40) badge.textContent='Fair ⚠';
+  else badge.textContent='Poor ✕';
+
+  const pct=Math.round((spent/income)*100);
+  let comment='';
+  if(pct>100) comment=`⚠ Overspent by ₹${(spent-income).toLocaleString('en-IN')}`;
+  else if(pct>80) comment='Watch your spending';
+  else if(pct>50) comment='Good control';
+  else comment='Excellent savings!';
+  document.getElementById('health-comment').textContent=comment;
+
+  ringC.data.datasets[0].data=[healthScore,100-healthScore];
+  ringC.update();
+}
+
+function last7(ex){
+  const m={};
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);m[d.toISOString().split('T')[0]]=0;}
+  ex.forEach(e=>{if(m[e.date]!==undefined)m[e.date]+=parseFloat(e.amount||0);});
+  return Object.values(m);
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-in');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  addBubble(msg,'u');
+  const t=addTyping();
+  try{
+    const r=await fetch(`${API}/chat/chat/`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    const d=await r.json();t.remove();
+    addBubble(d.ai_response||d.response||d.message||'Something went wrong.','a');
+  }catch(e){t.remove();addBubble('Connection error 😕','a');}
+}
+
+async function roastMe(){
+  addBubble('Roast my spending 🔥','u');
+  const t=addTyping();
+  try{
+    const r=await fetch(`${API}/chat/roast/`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({})});
+    const d=await r.json();t.remove();
+    const el=addBubble(d.roast||d.response||d.message||'No roast today 😅','a');
+    el.classList.add('roast');
+  }catch(e){t.remove();addBubble("Can't roast right now 😅",'a');}
+}
+
+function addBubble(text,type){
+  const box=document.getElementById('chat-msgs');
+  const d=document.createElement('div');d.className=`bbl ${type}`;d.textContent=text;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;return d;
+}
+
+function addTyping(){
+  const box=document.getElementById('chat-msgs');
+  const d=document.createElement('div');d.className='typing';
+  d.innerHTML='<span></span><span></span><span></span>';
+  box.appendChild(d);box.scrollTop=box.scrollHeight;return d;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+</script>
+</body>
+</html>
+<script>
+function renderInsights(ex){
+  const el=document.getElementById('insights-list');
+  if(!el)return;
+  const total=ex.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const cats={};
+  ex.forEach(e=>{cats[e.category]=(cats[e.category]||0)+parseFloat(e.amount||0);});
+  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const top=sorted[0];
+  const income=parseFloat(document.getElementById('c-total')?.dataset?.income||5000);
+  const pct=income>0?Math.round((total/income)*100):0;
+  const daily=Math.round(total/30);
+  const insights=[];
+  if(top){
+    const topPct=Math.round((top[1]/total)*100);
+    insights.push({color:'violet',tag:top[0],text:`${top[0].charAt(0).toUpperCase()+top[0].slice(1)} is your biggest expense at ₹${Math.round(top[1]).toLocaleString('en-IN')} (${topPct}% of total spending).`,meta:'Based on your data'});
+  }
+  if(pct>0){
+    const status=pct<30?'great':pct<60?'moderate':'high';
+    insights.push({color:'blue',tag:'Budget',text:`You've spent ₹${Math.round(total).toLocaleString('en-IN')} this month — ${pct}% of your ₹5,000 budget. Spending is ${status}.`,meta:'This month'});
+  }
+  insights.push({color:'cyan',tag:'Tip',text:`Your daily average is ₹${daily.toLocaleString('en-IN')}/day. ${daily<200?'Great discipline! 🎯':'Try to keep it under ₹167/day to stay within budget.'}`,meta:'Daily average'});
+  el.innerHTML=insights.map(i=>`
+    <div class="insight-item ${i.color}">
+      <div class="insight-top">
+        <div class="insight-text">${i.text}</div>
+        <span class="insight-tag ${i.color}">${i.tag}</span>
+      </div>
+      <div class="insight-meta">${i.meta}</div>
+    </div>`).join('');
+}
+</script>
